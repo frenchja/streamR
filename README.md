@@ -6,7 +6,7 @@ William Revelle often says that R can do anything, even order a pizza.  So, I wo
 Installation
 ------------
 ```bash
-sudo curl -O /usr/local/bin/stream.R
+sudo curl https://raw.githubusercontent.com/frenchja/streamR/master/stream.R -o /usr/local/bin/stream.R
 sudo chmod +x /usr/local/bin/stream.R
 ```
 

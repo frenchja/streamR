@@ -23,6 +23,7 @@ Options
 2. `--time`: Desired start time of stream.
 3. `--server`: RTMP server address.
 4. `--framerate`: Output framerate.
+5. `--crf`: Constant Rate Factor.
 
 TODO
 ----

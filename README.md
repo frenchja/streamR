@@ -24,6 +24,7 @@ Options
 3. `--server`: RTMP server address.
 4. `--framerate`: Output framerate.
 5. `--crf`: Constant Rate Factor.
+6. `--update`: Update stream.R to latest master.
 
 TODO
 ----

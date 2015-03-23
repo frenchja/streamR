@@ -13,10 +13,10 @@ if (suppressMessages(!require(optparse))) {
 
 # Parse option list
 option_list <- list(make_option(c("-t", "--time"),
-                                help = "Time in 24-hour notation (15:00)"), 
+                                help = "Start time in 24-hour notation (15:00)"), 
                     make_option(c("--server", "-s"),
                                 help = "RTMP server address"),
-                    make_option(c("-f", "--framerate"), 
+                    make_option(c("-f", "--framerate"), default = 15,
                                 help = "Desired output framerate"),
                     make_option(c("--crf"), default = 30, 
                                 help = "Desired Constant Rate Factor [default %default]"), 
@@ -24,6 +24,7 @@ option_list <- list(make_option(c("-t", "--time"),
                                 help = "Update stream.R to /usr/local/bin/"))
 opt <- parse_args(OptionParser(usage = "%prog [options] movie.avi", option_list = option_list), 
                   positional_arguments = TRUE)
+
 update.streamR <- function(x) {
   # Check sudo
   if (Sys.getenv("USER") != "root") {
@@ -39,10 +40,6 @@ if ("update" %in% names(opt$options) == TRUE) {
 
 if ("framerate" %in% names(opt$options) == TRUE) {
   framerate <- paste("-r", opt$options$framerate)
-} else {
-  # Otherwise use native framerate
-  #framerate <- ""
-  framerate <- NULL
 }
 
 # Print usage if no movie given
@@ -63,6 +60,20 @@ lapply(opt$args, FUN = function(x) {
 # start/\1/g'') duration <- system(command = ffmpeg.duration, intern =
 # TRUE)
 
+log <- function(file){
+  ffprobe.command <- paste("ffprobe -v quiet -print_format compact=print_section=0:nokey=1:escape=csv -show_entries format=duration",
+                            file)
+  film.duration <- as.numeric(system(command = ffprobe.command, intern = TRUE))
+  film.duration.print <- round(seconds_to_period(film.duration), 0)
+  cat("Movie: ", file, "\n",
+      "Start Time: ", now(),
+      "Duration: ", film.duration.print, "\n",
+      "End Time: ", now() + film.duration,
+      file = paste(as.Date(now()), ".log", sep = ""),
+      append = TRUE)
+}
+
+
 # Check ffmpeg
 ffmpeg.loc <- Sys.which("ffmpeg")
 if (ffmpeg.loc == "") {
@@ -75,7 +86,7 @@ if ("args" %in% names(opt) == TRUE && length(opt$args) > 0) {
   ffmpeg <- paste(ffmpeg.loc, "-re -i", file, "-c:v libx264", "-vf scale=640:-1", 
                   "-preset fast", "-tune zerolatency", "-crf", opt$options$crf, framerate, 
                   "-c:a libfdk_aac", "-profile:a aac_he", "-b:a 64k", "-f flv", opt$options$server)
-  
+  log(file)
   if ("time" %in% names(opt$options) == TRUE) {
     # Get delay in seconds for sleep
     delay <- difftime(time1 = as.POSIXct(as.character(opt$options$time), 

@@ -2,6 +2,7 @@ library(shiny)
 library(lubridate)
 library(parallel)
 library(ggplot2)
+library(jsonlite)
 
 # Define server logic required to draw a histogram
 shinyServer(function(input, output) {
@@ -38,6 +39,12 @@ shinyServer(function(input, output) {
     return(file_resolution)
   }
   
+  imdb <- function(title){
+    query_url <- paste0("http://www.omdbapi.com/?type=movie&r=json&t=", title, sep = "")
+    data <- fromJSON(query_url)
+    return(data)
+  }
+  
   build_movies_db <- function(base_dir){
     movies <- data.frame(Path=list.files(path = base_dir,
                                          pattern = "*.avi$|*.mkv$|*.mp4$|*.webm$",
@@ -52,7 +59,12 @@ shinyServer(function(input, output) {
                                recursive = TRUE,
                                ignore.case = TRUE,
                                include.dirs=FALSE)
-    movies <- movies[!grepl(pattern = "sample.",x = movies$Movie),]
+    movies$Movie <- basename(movies$Movie)
+    #movies$Movie <- lapply(X = movies$Movie, FUN = function(x){tail(strsplit(x,"/",fixed=T)[[1]],1)})
+#     movies$Movie <- gsub(pattern = "*.avi$|*.mkv$|*.mp4$|*.webm$|BluRay|x264|720p|1080p|DVDRip|VHSRip|CG|H.264|XViD|576p", 
+#                          replacement = "", ignore.case = TRUE,
+#                          x = movies$Movie)
+    movies <- movies[!grepl(pattern = "sample.", x = movies$Movie),]
     movies$Seconds <- mclapply(X = movies$Path, FUN = get_duration, mc.cores = detectCores())
     movies$Duration <- round(seconds_to_period(movies$Seconds))
     save(movies, file = "movies.Rdata")
@@ -62,7 +74,7 @@ shinyServer(function(input, output) {
   if(file.exists("movies.Rdata")){
     load(file = "movies.Rdata")
   } else {
-    build_movies_db(base_dir = input$base_dir)
+    build_movies_db(base_dir = Sys.getenv(x = 'base_dir'))
   }
   
   output$movies_list <- renderDataTable(subset(movies, select = c('Movie', 'Duration')),

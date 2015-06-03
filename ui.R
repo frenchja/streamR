@@ -32,6 +32,7 @@ shinyUI(fluidPage(
     mainPanel(
       tabsetPanel(
         tabPanel(title = "Movies", icon = icon("film"),
+                 selectizeInput("movie_queue", label = "Add to Queue:", choices = movies$Movies, selected = NULL, multiple = FALSE),
                  dataTableOutput("movies_list")),
         tabPanel(title = "Log", icon = icon("list"),
                  textOutput("ffmpeg_loc")),
